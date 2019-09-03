@@ -1,0 +1,11 @@
+[package]
+name = "jijirulvling"
+version = "0.1.0"
+authors = ["pangxiaoliang <pangxiaoliang@facts.io>"]
+edition = "2018"
+
+[dependencies]
+regex = "1.0.5"
+libc = "0.2"
+
+  
