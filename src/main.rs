@@ -35,4 +35,8 @@ fn main() {
 
   let d = ClientInfo::get_host_name();
   println!("host name is {}", d);
+
+  let e = ClientInfo::get_current_username(0);
+  println!("current user is {}", e);
+
 }

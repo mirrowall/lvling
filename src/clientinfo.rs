@@ -126,8 +126,17 @@ impl ClientInfo {
   }
 
   //
-  pub fn get_current_username() -> i32 {
-    0
+  pub fn get_current_username(uid:u32) -> String {
+    unsafe {
+      let mut pass : libc::passwd = mem::zeroed();
+      let mut buf = [0i8; 512];
+      let mut result : *mut libc::passwd = mem::zeroed();
+
+      if 0 == libc::getpwuid_r(uid, &mut pass as *mut libc::passwd, buf.as_mut_ptr(), 512, &mut result) {
+        return CStr::from_ptr(pass.pw_name).to_string_lossy().to_string();
+      }
+    }
+    "".to_string()
   }
 
   //
