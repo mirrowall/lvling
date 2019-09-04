@@ -27,7 +27,6 @@ struct tf {
 }
 
 fn main() {
-  let mut b = String::from("enp7s0");
-  let a = ClientInfo::get_mac_addr(&b);
+  let a = ClientInfo::get_ip_addr();
   println!("{}", a);
 }
