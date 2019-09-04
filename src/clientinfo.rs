@@ -2,11 +2,10 @@
 //! get client info
 //!
 use std::os::raw::c_char;
-use std::os::raw::c_void;
-use std::cell::RefCell;
 use std::mem;
 use libc;
 use std::ffi::CStr;
+use std::collections::HashMap;
 
 pub struct ClientInfo;
 
@@ -41,7 +40,7 @@ impl ClientInfo {
   // get ip and mac addr
   //
   //
-  pub fn get_ip_addr() -> i32 {
+  pub fn get_ip_addr(ipaddr :& mut HashMap<String, (String, String)>) -> Result<i32, &str> {
     unsafe {
       let socket = libc::socket(libc::AF_INET, libc::SOCK_DGRAM, 0);
       if socket > 0 {
@@ -79,28 +78,51 @@ impl ClientInfo {
             let b = inet_ntoa(tmp);
             let ip = CStr::from_ptr(b as *const c_char).to_string_lossy().to_string();
 
-            println!("eth: {} IP:{:?} MAC:{}", eth_name, ip, mac_addr);
+            ipaddr.insert(eth_name.to_string(), (ip, mac_addr));
           }
         }
         libc::close(socket);
       }
     }
+    Ok(0)
+  }
+
+  // get the disk size
+  // as GB
+  pub fn get_disk_size() -> u64 {
+    unsafe {
+      let mut stats : libc::statfs = mem::zeroed();
+      let err = libc::statfs("/".to_string().as_ptr() as *const i8, &mut stats as *mut libc::statfs);
+      if 0 == err {
+        let total = stats.f_blocks as u64 * stats.f_bsize as u64;
+        return total >> 30;
+      }
+    }
     0
   }
 
-  //
-  pub fn get_disk_size() -> i32 {
+  // get the memory size
+  // as MB
+  pub fn get_memory_size() -> u64 {
+    unsafe {
+      let mut sysinfo : libc::sysinfo = mem::zeroed();
+      let err = libc::sysinfo(&mut sysinfo as *mut libc::sysinfo);
+      if err == 0 {
+        return sysinfo.totalram/1024/1024;
+      }
+    }
     0
   }
 
-  //
-  pub fn get_memory_size() -> i32 {
-    0
-  }
-
-  //
-  pub fn get_host_name() -> i32 {
-    0
+  // get the host name
+  pub fn get_host_name() -> String {
+    unsafe {
+      let mut uts : libc::utsname = mem::zeroed();
+      if libc::uname(&mut uts as *mut libc::utsname) >= 0{
+        return CStr::from_ptr(&uts.nodename as *const c_char).to_string_lossy().to_string();
+      }
+    }
+    "".to_string()
   }
 
   //
