@@ -3,10 +3,13 @@
 //!
 use std::os::raw::c_char;
 use std::mem;
+use std::fs::File;
+use std::io::BufReader;
+use std::path::Path;
 use libc;
 use std::ffi::CStr;
 use std::collections::HashMap;
-
+use std::io::prelude::*;
 pub struct ClientInfo;
 
 impl ClientInfo {
@@ -140,48 +143,123 @@ impl ClientInfo {
   }
 
   //
-  pub fn get_user_home() -> i32 {
-    0
+  pub fn get_user_home() -> String {
+    unsafe {
+      let user = ClientInfo::get_current_username(libc::getuid());
+      if "root" == user {
+        return "/root".to_string();
+      }
+      return format!("/home/{}", user);
+    }
   }
 
   //
-  pub fn get_product_info() -> i32 {
-    0
+  pub fn get_product_info() -> std::io::Result<String> {
+    let file = File::open("/etc/.productinfo")?;
+    let buf_reader = BufReader::new(file);
+
+    let mut product = String::new();
+    for line in buf_reader.lines() {
+      let tmp = &line.unwrap();
+      if tmp.starts_with("-") {
+        product += tmp.trim_left_matches("-");
+        product += "-";
+      }
+    }
+    product.truncate(product.len()-1);
+    return Ok(product)
   }
 
   //
-  pub fn get_os_release() -> i32 {
-    0
+  pub fn get_os_release() -> std::io::Result<String> {
+    let file = File::open("/etc/os-release")?;
+    let reader = BufReader::new(file);
+
+    let mut product = String::new();
+    for line in reader.lines() {
+      let d = &line.unwrap();
+      if d.starts_with("NAME=") {
+        product += d[5..].to_string().trim_matches('"');
+      } else if d.starts_with("VERSION=") {
+        product += d[8..].to_string().trim_matches('"');
+      }
+    }
+    Ok(product)
   }
 
   //
-  pub fn get_issue() -> i32 {
-    0
+  pub fn get_issue() -> std::io::Result<String> {
+    let file = File::open("/etc/issue")?;
+    let mut reader = BufReader::new(file);
+
+    let mut issue = Vec::<u8>::new();
+    reader.read_until(b'\n', &mut issue);
+
+    Ok(String::from_utf8(issue).unwrap())
   }
 
   //
-  pub fn get_redhat_release() -> i32 {
-    0
+  pub fn get_redhat_release() -> std::io::Result<String> {
+    let file = File::open("/etc/redhat-release")?;
+    let mut reader = BufReader::new(file);
+
+    let mut issue = Vec::<u8>::new();
+    reader.read_until(b'\n', &mut issue);
+
+    Ok(String::from_utf8(issue).unwrap())
   }
 
   //
-  pub fn get_os_name() -> i32 {
-    0
+  pub fn get_os_name() -> String {
+    if Path::new("/etc/.productinfo").exists() {
+      return ClientInfo::get_product_info().unwrap();
+    } else if Path::new("/etc/os-release").exists() {
+      return ClientInfo::get_os_release().unwrap();
+    } else if Path::new("/etc/redhat-release").exists() {
+      return ClientInfo::get_redhat_release().unwrap();
+    } else if Path::new("/etc/issue").exists() {
+      return ClientInfo::get_issue().unwrap();
+    }
+
+    "Linux".to_string()
   }
 
   //
-  pub fn availd_guid() -> bool {
+  pub fn availd_guid(guid:&String) -> bool {
+    let segs = guid.split('-');
+    for s in segs {
+      let bs = s.as_bytes();
+
+    }
     true
   }
 
   //
-  pub fn get_bios_uuid() -> i32 {
-    0
+  pub fn get_bios_uuid() -> String {
+    if Path::new("/usr/sbin/dmidecode").exists() {
+      unsafe {
+        let file = libc::popen("/usr/sbin/dmidecode -s system-uuid|grep -v \"#\"".as_ptr() as *const c_char, "r".as_ptr() as *const c_char);
+        let mut buf = [0u8; 128];
+        libc::fgets(buf.as_mut_ptr() as *mut c_char, 128, file);
+
+        return String::from_utf8_lossy(&buf).to_string();
+      }
+    }
+    "".to_string()
   }
 
   //
-  pub fn get_disk_uuid() -> i32 {
-    0
+  pub fn get_disk_uuid() -> String {
+    if Path::new("/sbin/blkid").exists() {
+      unsafe {
+        let file = libc::popen("/sbin/blkid|grep -i uuid|head -n 1|cut -d \\\" -f 2".as_ptr() as *const c_char, "r".as_ptr() as *const c_char);
+        let mut buf = [0u8; 128];
+        libc::fgets(buf.as_mut_ptr() as *mut c_char, 128, file);
+
+        return String::from_utf8_lossy(&buf).to_string();
+      }
+    }
+    "".to_string()
   }
 
 }

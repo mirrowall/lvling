@@ -39,4 +39,22 @@ fn main() {
   let e = ClientInfo::get_current_username(0);
   println!("current user is {}", e);
 
+  let f = ClientInfo::get_user_home();
+  println!("user home path is {}", f);
+
+  let g = ClientInfo::get_product_info();
+  println!("product is {}", g.unwrap());
+
+  let h = ClientInfo::get_os_release();
+  println!("release is {}", h.unwrap());
+
+  let i = ClientInfo::get_issue();
+  println!("issue is {}", i.unwrap());
+
+  let j = ClientInfo::get_os_name();
+  println!("os name is {}", j);
+
+  let k = ClientInfo::get_bios_uuid();
+  println!("bios is {}", k);
+
 }
