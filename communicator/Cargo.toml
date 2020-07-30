@@ -1,0 +1,11 @@
+[package]
+name = "communicator"
+version = "0.1.0"
+authors = ["pangxiaoliang"]
+edition = "2018"
+
+[lib]
+crate-type = ["dylib", ]
+
+[dependencies]
+curl = {git="https://github.com/alexcrichton/curl-rust.git"}
