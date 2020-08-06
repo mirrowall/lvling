@@ -1,4 +1,6 @@
-///
+//!
+//! http request, use libcurl
+//!  
 use std::collections::HashMap;
 use std::io::Result;
 
@@ -17,12 +19,14 @@ pub fn http_get(url: &str, header: HashMap<String, String>) -> Result<String> {
     }
     easy.http_headers(list).unwrap();
 
-        let mut transfer = easy.transfer();
-        transfer.write_function(|data| {
-            dst.extend_from_slice(data);
-            Ok(data.len())
-        }).unwrap();
-        transfer.perform().unwrap();
+    let mut transfer = easy.transfer();
+    transfer.write_function(|new_data| {
+        dst.extend_from_slice(new_data);
+        Ok(new_data.len())
+    }).unwrap();
+    transfer.perform().unwrap();
 
-    Ok(String::from_utf8(dst).unwrap())
+    // Ok(String::from_utf8(dst).unwrap())
+    println!("{:?}", dst);
+    Ok("hello".to_string())
 }
